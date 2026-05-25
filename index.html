@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OptixCore — Precision Optical Components</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0a1628;
+    --navy-mid: #112240;
+    --navy-light: #1d3a5c;
+    --sky: #4da8d8;
+    --sky-light: #8ec8e8;
+    --sky-pale: #d6edf7;
+    --gold: #c8a96e;
+    --gold-light: #e3cfa0;
+    --white: #f8fafc;
+    --muted: #8eacc7;
+    --border: rgba(77,168,216,0.18);
+    --card-bg: rgba(17,34,64,0.7);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 3rem;
+    height: 68px;
+    background: rgba(10,22,40,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.04em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .logo span { color: var(--sky); }
+
+  .nav-links { display: flex; gap: 0.25rem; }
+
+  .nav-links button {
+    background: none; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; font-weight: 400;
+    color: var(--muted);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s, background 0.2s;
+  }
+  .nav-links button:hover { color: var(--white); background: rgba(77,168,216,0.08); }
+  .nav-links button.active { color: var(--sky); background: rgba(77,168,216,0.12); }
+
+  /* ─── SECTIONS ─── */
+  section { display: none; padding-top: 68px; min-height: 100vh; }
+  section.active { display: block; }
+
+  /* ─── HOME ─── */
+  .hero {
+    position: relative;
+    min-height: calc(100vh - 68px);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: flex-start;
+    padding: 4rem 3rem 4rem 10vw;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 80% 40%, rgba(77,168,216,0.13) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 50% at 20% 70%, rgba(200,169,110,0.07) 0%, transparent 60%);
+  }
+
+  /* Prism illustration */
+  .prism-art {
+    position: absolute; right: 8vw; top: 50%; transform: translateY(-50%);
+    width: 340px; opacity: 0.85;
+    z-index: 1;
+  }
+
+  .hero-content { position: relative; z-index: 2; max-width: 540px; }
+
+  .eyebrow {
+    font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--sky); margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .eyebrow::before { content: ''; display: block; width: 32px; height: 1px; background: var(--sky); }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.4rem, 5vw, 3.8rem);
+    line-height: 1.12;
+    color: var(--white);
+    margin-bottom: 1.5rem;
+  }
+  h1 em { color: var(--sky); font-style: italic; }
+
+  .hero-sub {
+    font-size: 1.05rem; font-weight: 300; line-height: 1.75;
+    color: var(--muted); margin-bottom: 2.5rem; max-width: 420px;
+  }
+
+  .btn-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  .btn-primary {
+    padding: 0.8rem 2rem;
+    background: var(--sky);
+    color: var(--navy);
+    border: none; border-radius: 40px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 500;
+    cursor: pointer; letter-spacing: 0.04em;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-primary:hover { background: var(--sky-light); transform: translateY(-1px); }
+
+  .btn-outline {
+    padding: 0.8rem 2rem;
+    background: transparent;
+    color: var(--white);
+    border: 0.5px solid var(--border);
+    border-radius: 40px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 400;
+    cursor: pointer; letter-spacing: 0.04em;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-outline:hover { border-color: var(--sky); color: var(--sky); }
+
+  /* stats strip */
+  .stats-strip {
+    display: flex; gap: 3rem;
+    padding: 2.5rem 10vw;
+    border-top: 0.5px solid var(--border);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 0.25rem; }
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.2rem; color: var(--white);
+  }
+  .stat-label { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.08em; }
+
+  /* product cards */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-top: 1px solid var(--border);
+  }
+  .product-card {
+    background: var(--navy);
+    padding: 2.5rem 2rem;
+    transition: background 0.2s;
+  }
+  .product-card:hover { background: var(--navy-mid); }
+  .product-icon {
+    width: 44px; height: 44px; margin-bottom: 1.2rem;
+    color: var(--sky);
+  }
+  .product-card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem; margin-bottom: 0.6rem; color: var(--white);
+  }
+  .product-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.65; }
+
+  /* ─── ABOUT ─── */
+  .page-header {
+    padding: 5rem 10vw 3rem;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .page-header .eyebrow { margin-bottom: 1rem; }
+  .page-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.15; color: var(--white);
+  }
+  .page-header p {
+    margin-top: 1.2rem; font-size: 1.05rem;
+    color: var(--muted); line-height: 1.75; max-width: 600px;
+  }
+
+  .two-col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 4rem; padding: 4rem 10vw;
+  }
+  @media(max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  .section-label {
+    font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 1rem;
+  }
+  .body-text { font-size: 0.95rem; color: var(--muted); line-height: 1.8; }
+  .body-text + .body-text { margin-top: 1rem; }
+
+  .value-list { list-style: none; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+  .value-list li {
+    display: flex; gap: 1rem; align-items: flex-start;
+    font-size: 0.92rem; color: var(--muted); line-height: 1.6;
+  }
+  .value-list li::before {
+    content: ''; flex-shrink: 0;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--sky); margin-top: 0.55rem;
+  }
+
+  .team-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem; padding: 0 10vw 5rem;
+  }
+  .team-card {
+    background: var(--card-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+  }
+  .team-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--navy-light);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem; color: var(--sky);
+    margin-bottom: 1rem;
+  }
+  .team-card h4 { font-size: 1rem; font-weight: 500; color: var(--white); margin-bottom: 0.25rem; }
+  .team-card span { font-size: 0.8rem; color: var(--muted); }
+
+  /* ─── TECHNOLOGY ─── */
+  .tech-intro { padding: 4rem 10vw; max-width: 700px; }
+  .tech-intro h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem; color: var(--white); margin-bottom: 1rem;
+  }
+  .tech-intro p { font-size: 0.95rem; color: var(--muted); line-height: 1.8; }
+
+  .tech-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem; padding: 0 10vw 3rem;
+  }
+  .tech-card {
+    background: var(--card-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 2rem;
+    position: relative; overflow: hidden;
+  }
+  .tech-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--sky), transparent);
+  }
+  .tech-card h4 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.15rem; color: var(--white); margin-bottom: 0.75rem;
+  }
+  .tech-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.7; }
+  .tech-tag {
+    display: inline-block; margin-top: 1rem;
+    padding: 0.3rem 0.8rem;
+    background: rgba(77,168,216,0.12);
+    color: var(--sky); border-radius: 20px;
+    font-size: 0.75rem; letter-spacing: 0.06em;
+  }
+
+  .spec-table-wrap { padding: 2rem 10vw 5rem; }
+  .spec-table-wrap h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.4rem; color: var(--white); margin-bottom: 1.5rem;
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  th {
+    text-align: left; padding: 0.75rem 1rem;
+    background: var(--navy-mid); color: var(--sky);
+    font-weight: 500; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 0.5px solid var(--border);
+  }
+  td {
+    padding: 0.8rem 1rem; color: var(--muted);
+    border-bottom: 0.5px solid rgba(77,168,216,0.08);
+  }
+  tr:hover td { background: rgba(77,168,216,0.04); }
+
+  /* ─── NEWS ─── */
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem; padding: 3rem 10vw 5rem;
+  }
+  .news-card {
+    background: var(--card-bg);
+    border: 0.5px solid var(--border);
+    border-radius: 12px; padding: 2rem;
+    cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+  }
+  .news-card:hover { border-color: rgba(77,168,216,0.4); transform: translateY(-2px); }
+  .news-meta {
+    display: flex; gap: 1rem; align-items: center;
+    margin-bottom: 1rem;
+  }
+  .news-tag {
+    padding: 0.2rem 0.7rem;
+    border-radius: 20px; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .tag-product { background: rgba(77,168,216,0.15); color: var(--sky); }
+  .tag-company { background: rgba(200,169,110,0.15); color: var(--gold); }
+  .tag-research { background: rgba(141,200,100,0.15); color: #8dc864; }
+  .news-date { font-size: 0.78rem; color: var(--muted); }
+  .news-card h4 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem; color: var(--white);
+    margin-bottom: 0.7rem; line-height: 1.35;
+  }
+  .news-card p { font-size: 0.86rem; color: var(--muted); line-height: 1.65; }
+  .news-read-more {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    margin-top: 1.2rem; font-size: 0.82rem;
+    color: var(--sky); text-decoration: none;
+  }
+  .news-read-more::after { content: '→'; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 2rem 10vw;
+    border-top: 0.5px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.8rem; color: var(--muted);
+    flex-wrap: wrap; gap: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#" onclick="showSection('home')">Optix<span>Core</span></a>
+  <div class="nav-links">
+    <button class="active" onclick="showSection('home')">Home</button>
+    <button onclick="showSection('about')">About</button>
+    <button onclick="showSection('technology')">Technology</button>
+    <button onclick="showSection('news')">News</button>
+  </div>
+</nav>
+
+<!-- ═══════════ HOME ═══════════ -->
+<section id="home" class="active">
+  <div class="hero">
+    <div class="hero-bg"></div>
+
+    <!-- SVG Prism Illustration -->
+    <svg class="prism-art" viewBox="0 0 340 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Prism body -->
+      <polygon points="170,30 320,300 20,300" fill="rgba(29,58,92,0.7)" stroke="rgba(77,168,216,0.5)" stroke-width="1"/>
+      <!-- Refraction rays -->
+      <line x1="170" y1="30" x2="330" y2="130" stroke="rgba(77,168,216,0.3)" stroke-width="0.5"/>
+      <!-- Dispersed spectrum -->
+      <line x1="320" y1="300" x2="340" y2="260" stroke="#e87c7c" stroke-width="1.5" opacity="0.7"/>
+      <line x1="320" y1="300" x2="340" y2="275" stroke="#e8b87c" stroke-width="1.5" opacity="0.7"/>
+      <line x1="320" y1="300" x2="340" y2="290" stroke="#e8e47c" stroke-width="1.5" opacity="0.7"/>
+      <line x1="320" y1="300" x2="340" y2="305" stroke="#8ce87c" stroke-width="1.5" opacity="0.7"/>
+      <line x1="320" y1="300" x2="340" y2="320" stroke="#7cb8e8" stroke-width="1.5" opacity="0.7"/>
+      <line x1="320" y1="300" x2="340" y2="335" stroke="#4da8d8" stroke-width="1.5" opacity="0.7"/>
+      <line x1="320" y1="300" x2="337" y2="350" stroke="#a07ce8" stroke-width="1.5" opacity="0.7"/>
+      <!-- incident ray -->
+      <line x1="40" y1="100" x2="170" y2="165" stroke="rgba(248,250,252,0.4)" stroke-width="1" stroke-dasharray="4 3"/>
+      <!-- inner reflection -->
+      <line x1="170" y1="165" x2="220" y2="230" stroke="rgba(77,168,216,0.25)" stroke-width="0.8"/>
+      <!-- face highlight -->
+      <line x1="20" y1="300" x2="170" y2="30" stroke="rgba(77,168,216,0.6)" stroke-width="0.5"/>
+      <!-- glint -->
+      <circle cx="170" cy="30" r="3" fill="rgba(77,168,216,0.9)"/>
+      <circle cx="170" cy="30" r="8" fill="rgba(77,168,216,0.15)"/>
+      <!-- base glow -->
+      <ellipse cx="170" cy="308" rx="110" ry="10" fill="rgba(77,168,216,0.08)"/>
+      <!-- film stack hint -->
+      <rect x="60" y="318" width="220" height="5" rx="2" fill="rgba(77,168,216,0.18)"/>
+      <rect x="70" y="326" width="200" height="4" rx="2" fill="rgba(200,169,110,0.15)"/>
+      <rect x="80" y="333" width="180" height="3" rx="1.5" fill="rgba(77,168,216,0.10)"/>
+    </svg>
+
+    <div class="hero-content">
+      <p class="eyebrow">Precision Optical Components</p>
+      <h1>Light, shaped<br/>with <em>precision</em></h1>
+      <p class="hero-sub">We design and manufacture high-performance prisms, optical films, and custom components for imaging, sensing, and display systems worldwide.</p>
+      <div class="btn-group">
+        <button class="btn-primary" onclick="showSection('technology')">Our Technology</button>
+        <button class="btn-outline" onclick="showSection('about')">About Us</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-strip">
+    <div class="stat-item">
+      <span class="stat-num">20+</span>
+      <span class="stat-label">Years of expertise</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">500+</span>
+      <span class="stat-label">Custom specifications</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">40+</span>
+      <span class="stat-label">Countries served</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">ISO</span>
+      <span class="stat-label">9001 Certified</span>
+    </div>
+  </div>
+
+  <div class="products-grid">
+    <div class="product-card">
+      <svg class="product-icon" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="22,4 40,36 4,36" stroke="currentColor" stroke-width="1.2" fill="none"/>
+        <line x1="22" y1="4" x2="4" y2="20" stroke="currentColor" stroke-width="0.7" stroke-dasharray="3 2" opacity="0.5"/>
+      </svg>
+      <h3>Optical Prisms</h3>
+      <p>Beam-splitting, dispersing, and reflecting prisms crafted to sub-micron tolerances for scientific and industrial optics.</p>
+    </div>
+    <div class="product-card">
+      <svg class="product-icon" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="14" width="36" height="4" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/>
+        <rect x="4" y="22" width="36" height="4" rx="1" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.6"/>
+        <rect x="4" y="30" width="36" height="4" rx="1" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.35"/>
+      </svg>
+      <h3>Optical Films</h3>
+      <p>Anti-reflection, polarizing, and filter films engineered for demanding spectral requirements and environmental stability.</p>
+    </div>
+    <div class="product-card">
+      <svg class="product-icon" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="22" cy="22" r="14" stroke="currentColor" stroke-width="1.2" fill="none"/>
+        <line x1="8" y1="22" x2="36" y2="22" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+        <line x1="22" y1="8" x2="22" y2="36" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+      </svg>
+      <h3>Custom Assemblies</h3>
+      <p>Fully integrated optical sub-assemblies aligned and cemented to your exact specification for OEM integration.</p>
+    </div>
+    <div class="product-card">
+      <svg class="product-icon" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 22 L22 8 L36 22 L22 36 Z" stroke="currentColor" stroke-width="1.2" fill="none"/>
+        <circle cx="22" cy="22" r="4" stroke="currentColor" stroke-width="1" fill="none"/>
+      </svg>
+      <h3>Coatings</h3>
+      <p>PVD and ion-beam deposited coatings for AR, HR, partial reflectance, and hard-coat applications.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ ABOUT ═══════════ -->
+<section id="about">
+  <div class="page-header">
+    <p class="eyebrow">Who we are</p>
+    <h2>Optical precision<br/>since 2003</h2>
+    <p>OptixCore is an independent manufacturer of precision optical components and thin-film coatings. We work with R&D labs, defense contractors, machine vision OEMs, and display manufacturers globally.</p>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <p class="section-label">Our story</p>
+      <p class="body-text">Founded in 2003 by a team of optical engineers from leading research institutions, OptixCore was born out of the need for an agile, high-precision manufacturer that could move at the speed of innovation.</p>
+      <p class="body-text">Over two decades we have grown from a small polishing workshop into a full-service optical component supplier with advanced coating, inspection, and assembly capabilities under one roof.</p>
+      <p class="body-text">We remain privately held, engineering-led, and obsessively focused on surface and wavefront quality.</p>
+    </div>
+    <div>
+      <p class="section-label">Our values</p>
+      <ul class="value-list">
+        <li>Uncompromising quality — we inspect every surface, every time, with interferometry and profilometry before shipment.</li>
+        <li>Engineering partnership — we work alongside your design team, not just fulfill purchase orders.</li>
+        <li>Speed without shortcuts — rapid prototyping cycles that do not sacrifice specification compliance.</li>
+        <li>Sustainable manufacturing — energy-efficient coating processes and responsible material sourcing.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="team-grid">
+    <div class="team-card">
+      <div class="team-avatar">DK</div>
+      <h4>Dr. Daniel Kim</h4>
+      <span>CEO & Co-Founder</span>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">SL</div>
+      <h4>Sarah Liu</h4>
+      <span>Head of Engineering</span>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">MR</div>
+      <h4>Marc Richter</h4>
+      <span>Director of Coatings</span>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar">AN</div>
+      <h4>Aiko Nakamura</h4>
+      <span>Quality & Metrology</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ TECHNOLOGY ═══════════ -->
+<section id="technology">
+  <div class="page-header">
+    <p class="eyebrow">Our capabilities</p>
+    <h2>Where material science<br/>meets precision optics</h2>
+    <p>From raw glass blanks to fully tested assemblies, our in-house process chain gives us complete control over quality and lead time.</p>
+  </div>
+
+  <div class="tech-cards">
+    <div class="tech-card">
+      <h4>Glass Polishing & Shaping</h4>
+      <p>CNC and traditional polishing to surface figure accuracies of λ/20 PV. We work with BK7, fused silica, N-SF11, CaF₂, and custom glass types.</p>
+      <span class="tech-tag">λ/20 surface figure</span>
+    </div>
+    <div class="tech-card">
+      <h4>Thin-Film Coatings</h4>
+      <p>Ion-beam sputtering and e-beam evaporation chambers producing hard, durable multilayer stacks. AR coatings with R &lt; 0.1% per surface across broadband.</p>
+      <span class="tech-tag">IBS & e-beam PVD</span>
+    </div>
+    <div class="tech-card">
+      <h4>Optical Films & Laminates</h4>
+      <p>Proprietary multilayer polymer films for polarization control, privacy filtering, and broadband anti-reflection optimized for display and sensing applications.</p>
+      <span class="tech-tag">Multilayer polymer</span>
+    </div>
+    <div class="tech-card">
+      <h4>Precision Metrology</h4>
+      <p>In-house Fizeau interferometry, profilometry, spectrophotometry, and laser damage threshold testing ensure every part ships in spec.</p>
+      <span class="tech-tag">Fizeau / LIDT testing</span>
+    </div>
+    <div class="tech-card">
+      <h4>Optical Bonding & Assembly</h4>
+      <p>UV and optical cement bonding of prism assemblies and doublets. Clean-room assembly with wavefront error budgeting for the assembled system.</p>
+      <span class="tech-tag">ISO 5 clean room</span>
+    </div>
+    <div class="tech-card">
+      <h4>Custom Design Service</h4>
+      <p>Optical design support using Zemax and Code V. We can co-develop from specification through prototype to production, including stray-light analysis.</p>
+      <span class="tech-tag">Zemax / Code V</span>
+    </div>
+  </div>
+
+  <div class="spec-table-wrap">
+    <h3>Standard prism specifications</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>Standard</th>
+          <th>High Precision</th>
+          <th>Ultra Precision</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Surface figure</td><td>λ/4</td><td>λ/10</td><td>λ/20</td></tr>
+        <tr><td>Surface quality</td><td>60-40 S/D</td><td>20-10 S/D</td><td>10-5 S/D</td></tr>
+        <tr><td>Angle tolerance</td><td>±3'</td><td>±30"</td><td>±5"</td></tr>
+        <tr><td>AR coating R</td><td>&lt;0.5% / surface</td><td>&lt;0.25%</td><td>&lt;0.1%</td></tr>
+        <tr><td>Typical lead time</td><td>4–6 weeks</td><td>6–10 weeks</td><td>10–16 weeks</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ NEWS ═══════════ -->
+<section id="news">
+  <div class="page-header">
+    <p class="eyebrow">Latest updates</p>
+    <h2>News & announcements</h2>
+    <p>Product launches, company milestones, and technical insights from the OptixCore team.</p>
+  </div>
+
+  <div class="news-grid">
+    <div class="news-card">
+      <div class="news-meta">
+        <span class="news-tag tag-product">Product</span>
+        <span class="news-date">May 2025</span>
+      </div>
+      <h4>New ultra-low-loss AR coatings for UV applications now available</h4>
+      <p>Our expanded coating line now covers 200–400 nm with R &lt; 0.15% per surface, enabling high-power UV lithography and spectroscopy use cases.</p>
+      <a class="news-read-more" href="#">Read more</a>
+    </div>
+    <div class="news-card">
+      <div class="news-meta">
+        <span class="news-tag tag-company">Company</span>
+        <span class="news-date">March 2025</span>
+      </div>
+      <h4>OptixCore achieves ISO 9001:2015 recertification with zero non-conformances</h4>
+      <p>Following a rigorous third-party audit, our quality management system received full recertification — a result of the team's ongoing commitment to process discipline.</p>
+      <a class="news-read-more" href="#">Read more</a>
+    </div>
+    <div class="news-card">
+      <div class="news-meta">
+        <span class="news-tag tag-research">Research</span>
+        <span class="news-date">January 2025</span>
+      </div>
+      <h4>Collaborative paper on polarizing beam-splitter cubes published in Optics Express</h4>
+      <p>We co-authored research with university partners characterizing the angular bandwidth and extinction ratio of our PBS cubes across the visible spectrum.</p>
+      <a class="news-read-more" href="#">Read more</a>
+    </div>
+    <div class="news-card">
+      <div class="news-meta">
+        <span class="news-tag tag-product">Product</span>
+        <span class="news-date">October 2024</span>
+      </div>
+      <h4>Introducing the OFC-400 privacy film series for automotive displays</h4>
+      <p>Our new narrow-viewing-angle film family is engineered for in-cabin displays, offering 60° half-angle cutoff and high transmission in the forward viewing direction.</p>
+      <a class="news-read-more" href="#">Read more</a>
+    </div>
+    <div class="news-card">
+      <div class="news-meta">
+        <span class="news-tag tag-company">Company</span>
+        <span class="news-date">August 2024</span>
+      </div>
+      <h4>Expansion of clean-room facility doubles assembly capacity</h4>
+      <p>A new 200 m² ISO 5 clean room entered service, significantly increasing our throughput for bonded prism assemblies and cemented doublets.</p>
+      <a class="news-read-more" href="#">Read more</a>
+    </div>
+    <div class="news-card">
+      <div class="news-meta">
+        <span class="news-tag tag-research">Research</span>
+        <span class="news-date">May 2024</span>
+      </div>
+      <h4>Technical note: selecting the right glass for high-power laser prisms</h4>
+      <p>Our engineers share guidelines on bulk absorption, thermal lensing, and LIDT considerations when specifying prism glass for pulsed laser applications.</p>
+      <a class="news-read-more" href="#">Read more</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2025 OptixCore. All rights reserved.</span>
+  <span>contact@optixcore.com</span>
+</footer>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs = ['home','about','technology','news'];
+  const idx = tabs.indexOf(id);
+  document.querySelectorAll('.nav-links button')[idx].classList.add('active');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
